@@ -11,19 +11,7 @@
         android:layout_height="fill_parent"
         android:layout_marginRight="2dip"
         android:src="@drawable/machine" />
-
-    <Button
-        android:id="@+id/connect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/connect_peer_button" />
-    <Button
-        android:id="@+id/disconnect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/disconnect_peer_button" />    
-
-    <LinearLayout
+        <LinearLayout
         android:orientation="vertical"
         android:layout_width="0dip"
         android:layout_weight="1"
@@ -40,9 +28,26 @@
             android:layout_weight="1"
             android:id="@+id/device_details"
             android:singleLine="true"
-            android:ellipsize="marquee" />
-    
+            android:ellipsize="marquee" />  
+            </LinearLayout> 
+<!-- 
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0dip"
+        android:layout_weight="1"
+        android:layout_height="fill_parent">
+
+    <Button
+        android:id="@+id/connect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/connect_peer_button" />
+    <Button
+        android:id="@+id/disconnect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/disconnect_peer_button" />      
 
 
-    </LinearLayout>
+    </LinearLayout> -->
 </LinearLayout>

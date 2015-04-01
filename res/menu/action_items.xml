@@ -16,7 +16,7 @@
     <item
         android:id="@+id/connect_dev"
         android:icon="@drawable/ic_action_discover"
-        android:title="@string/connect_peer_button"
+        android:title="@string/action_device_list"
         android:showAsAction="ifRoom|withText" />
     <item
         android:id="@+id/show_devices"

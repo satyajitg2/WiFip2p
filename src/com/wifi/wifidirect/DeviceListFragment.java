@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.wifi.wifidirect;
 
 import java.util.ArrayList;
@@ -28,7 +12,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 /**
@@ -57,25 +43,15 @@ public class DeviceListFragment extends ListFragment {
         mContentView = inflater.inflate(R.layout.device_list, null);
         return mContentView;
     }
+	
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		//TODO if Client is CONNECTED SHOW DETAILS else request connection
+		// Check the text view to see if connected OR check device status
+		
+		// If connected start some data transfer
 
-    private static String getDeviceStatus(int deviceStatus) {
-        switch (deviceStatus) {
-            case WifiP2pDevice.AVAILABLE:
-                return "Available";
-            case WifiP2pDevice.INVITED:
-                return "Invited";
-            case WifiP2pDevice.CONNECTED:
-                return "Connected";
-            case WifiP2pDevice.FAILED:
-                return "Failed";
-            case WifiP2pDevice.UNAVAILABLE:
-                return "Unavailable";
-            default:
-                return "Unknown";
-
-        }
-    }
-
+	}
 
     /**
      * Array adapter for ListFragment that maintains WifiP2pDevice list.
@@ -116,7 +92,7 @@ public class DeviceListFragment extends ListFragment {
                     top.setText(device.deviceName);
                 }
                 if (bottom != null) {
-                    bottom.setText(getDeviceStatus(device.status));
+                    bottom.setText(WiFiDirectActivity.getDeviceStatus(device.status));
                 }
             }
 

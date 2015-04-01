@@ -1,22 +1,8 @@
-/*
- * Copyright (C) 2011 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.wifi.wifidirect;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,12 +10,15 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.ActionListener;
@@ -68,8 +57,14 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     private BroadcastReceiver receiver = null;
 
 	private List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
+	private List<WifiP2pDevice> connectedPeers = new ArrayList<WifiP2pDevice>();
+	
+	// Hashmap for GroupOwner Device and its connected clients map.
+	private HashMap<String, HashMap<String, WifiP2pDevice>> mMap = new HashMap<String, HashMap<String,WifiP2pDevice>>();
 	private WifiP2pInfo info;
 	private WifiP2pDevice device;
+	ContentResolver contentResolver;
+	private MediaManager mMedia;
 
     /**
      * @param isWifiP2pEnabled the isWifiP2pEnabled to set
@@ -89,9 +84,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		}
         
 
-        // add necessary intent values to be matched.
-        //WIFI_P2P_CONNECTION_CHANGED_ACTION
-        //WIFI_P2P_DISCOVERY_CHANGED_ACTION
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
@@ -100,6 +92,11 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), null);
         initiateDiscovery();
+        
+		contentResolver = getContentResolver();
+        mMedia = new MediaManager(contentResolver);
+        new WifiAsyncTask(getApplicationContext(),contentResolver, mMedia).execute();
+        
     }
 
     /** register the BroadcastReceiver with the intent values to be matched */
@@ -123,10 +120,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see android.app.Activity#onOptionsItemSelected(android.view.MenuItem)
-     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -136,10 +129,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
                     // Since this is the system wireless settings activity, it's
                     // not going to send us a result. We will be notified by
                     // WiFiDeviceBroadcastReceiver instead.
-
-                    //startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
                 	startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
-                    
                 } else {
                     Log.e(TAG, "channel or manager is null");
                 }
@@ -150,37 +140,38 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
                     Toast.makeText(WiFiDirectActivity.this, R.string.p2p_off_warning, Toast.LENGTH_SHORT).show();
                     return true;
                 }
-/*                final DeviceListFragment fragment = (DeviceListFragment) getFragmentManager()
-                        .findFragmentById(R.id.frag_list);
-                fragment.onInitiateDiscovery();*/
-                //initiateDiscovery();
+                initiateDiscovery();
                 return true;
             case R.id.connect_dev:
             	if (isWifiP2pEnabled && (!peers.isEmpty())) {
-/*            		for (Iterator iterator = peers.iterator(); iterator.hasNext();) {
-    						WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
-    						if (wifiP2pDevice.status != 0){
-    		                    WifiP2pConfig config = new WifiP2pConfig();
-    		                    config.deviceAddress = wifiP2pDevice.deviceAddress;
-    		                    config.wps.setup = WpsInfo.PBC;
-    		                    Toast.makeText(WiFiDirectActivity.this, "Connecting.......... " + wifiP2pDevice.deviceName , Toast.LENGTH_SHORT).show();
-    		                    connect(config);
-    						}
-                		}*/
-                    /*ConnectedDevicesFragment deviceFrag = (ConnectedDevicesFragment) getFragmentManager().findFragmentById(R.id.device_list_fragment);
-                    deviceFrag.setPeers(peers);
-                    deviceFrag.notifyPeers();
-                    */
-            		
+            		List<WifiP2pDevice> list = new ArrayList<WifiP2pDevice>();
+            		for (WifiP2pDevice device : peers) {
+						if (device.status == WifiP2pDevice.CONNECTED) {
+							list.add(device);
+						}
+					}
+            		//TODO show this list on p2p devices
+            		DeviceListFragment frag = (DeviceListFragment) getFragmentManager().findFragmentById(R.id.container);
+            		frag.setPeers(list);
             	}
             case R.id.show_devices:
             	if (isWifiP2pEnabled && (!peers.isEmpty())) {
-            		for (Iterator iterator = peers.iterator(); iterator.hasNext();) {
+            		List<WifiP2pDevice> list = peers;
+            		List<WifiP2pDevice> client = new ArrayList<WifiP2pDevice>();
+            		for (Iterator iterator = list.iterator(); iterator.hasNext();) {
 						WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
-						if (wifiP2pDevice.status == 0){
+						if (wifiP2pDevice.status != WifiP2pDevice.CONNECTED){
+				            WifiP2pConfig config = new WifiP2pConfig();
+				            config.deviceAddress = wifiP2pDevice.deviceAddress;
+				            config.wps.setup = WpsInfo.PBC;
+							connect(config);
+						} else {
 							Toast.makeText(WiFiDirectActivity.this, "Connected Device: " + wifiP2pDevice.deviceName , Toast.LENGTH_SHORT).show();
+							client.add(wifiP2pDevice);
 						}
             		}
+            		DeviceListFragment frag = (DeviceListFragment) getFragmentManager().findFragmentById(R.id.container);
+            		frag.setPeers(list);
             	}            	
             default:
                 return super.onOptionsItemSelected(item);
@@ -206,13 +197,11 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 
 	public void connect(WifiP2pConfig config) {
         manager.connect(channel, config, new ActionListener() {
-
             @Override
             public void onSuccess() {
             	Toast.makeText(WiFiDirectActivity.this, "Connect successfull.", Toast.LENGTH_SHORT).show();
                 // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
             }
-
             @Override
             public void onFailure(int reason) {
                 Toast.makeText(WiFiDirectActivity.this, "Connect failed. Retry.",
@@ -223,17 +212,13 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 
     public void disconnect() {
         manager.removeGroup(channel, new ActionListener() {
-
             @Override
             public void onFailure(int reasonCode) {
                 Log.d(TAG, "Disconnect failed. Reason :" + reasonCode);
-
             }
-
             @Override
             public void onSuccess() {
             }
-
         });
     }
 
@@ -251,7 +236,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     }
 
     public void cancelDisconnect() {
-
         /*
          * A cancel abort request by user. Disconnect i.e. removeGroup if
          * already connected. Else, request WifiP2pManager to abort the ongoing
@@ -259,12 +243,10 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
          */
         if (manager != null) {
                 manager.cancelConnect(channel, new ActionListener() {
-
                     @Override
                     public void onSuccess() {
                         Toast.makeText(WiFiDirectActivity.this, "Aborting connection",Toast.LENGTH_SHORT).show();
                     }
-
                     @Override
                     public void onFailure(int reasonCode) {
                         Toast.makeText(WiFiDirectActivity.this,"Connect abort request failed. Reason Code: " + reasonCode,
@@ -272,12 +254,10 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
                     }
                 });
         }
-
     }
 
 	public void resetData() {
 		Toast.makeText(WiFiDirectActivity.this, "Reset Data",Toast.LENGTH_SHORT).show();
-		
 	}
 
 	@Override
@@ -285,10 +265,9 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         this.info = info;
 
         // The owner IP is now known.
-        
         boolean groupOwner = info.isGroupOwner;
-        // InetAddress from WifiP2pInfo struct.
         String hostaddress = info.groupOwnerAddress.getHostAddress();
+        
         // After the group negotiation, we assign the group owner as the file
         // server. The file server is single threaded, single connection server
         // socket.
@@ -299,8 +278,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
             // get file button.
         	
         }
-        // hide the connect button
-        //connectedDevices.put(info, value)
 	}
 
 	public void updateThisDevice(WifiP2pDevice device) {
@@ -316,7 +293,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		Toast.makeText(WiFiDirectActivity.this, device.deviceName + "  " + deviceStatus + " TO:  " + connectedDevices,Toast.LENGTH_SHORT).show();
 		Log.d(WiFiDirectActivity.TAG, deviceAddr + deviceStatus + deviceInfo);
 	}
-    private static String getDeviceStatus(int deviceStatus) {
+    public static String getDeviceStatus(int deviceStatus) {
         switch (deviceStatus) {
             case WifiP2pDevice.AVAILABLE:
                 return "Available";
@@ -337,9 +314,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 	public void onPeersAvailable(WifiP2pDeviceList peerList) {
 		peers.clear();
         peers.addAll(peerList.getDeviceList());
-/*        ConnectedDevicesFragment deviceFrag = (ConnectedDevicesFragment) getFragmentManager().findFragmentById(R.id.device_list_fragment);
-        deviceFrag.getListAdapter().setItems(peers);
-        deviceFrag.getListAdapter().notifyDataSetChanged();*/
+
 		StringBuilder availablePeers = new StringBuilder();
 		for (Iterator iterator = peers.iterator(); iterator.hasNext();) {
 			WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
@@ -357,10 +332,17 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		transaction.commit();
 		fragment.setPeers(peers);     
 		
-		// TODO We have the list of devices now try and connect all and store them in a connected list of devices to be show
-		// in a new list of connected devices, all connected devices will be shown on that Fragment aka ConnectedFragment
-		// and available peers on DiscoveryFragment
-		
+		// CAUTION NEVER CALL CONNECT in onPeersAvailable Callback to create LOOPS
+		// TODO Incase a device is connected start data transfer or SYNC
+	}
+
+	private void traversePeersAndConnect(List<WifiP2pDevice> peers2, DeviceListFragment fragment) {
+		for (WifiP2pDevice wifiP2pDevice : peers2) {
+            WifiP2pConfig config = new WifiP2pConfig();
+            config.deviceAddress = wifiP2pDevice.deviceAddress;
+            config.wps.setup = WpsInfo.PBC;
+            connect(config);
+		}
 	}
 	/**
 	 * A placeholder fragment containing a simple view.
@@ -384,6 +366,26 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 	        my_name_view.setText("Waiting for device name...");
 	        my_status_view.setText("Status retrieving...");
 	    }
+	}
+	public void updateConnectedDevice(WifiP2pDevice wifiP2pDevice) {
+		Toast.makeText(this, "updateConnectedDevice " + wifiP2pDevice.deviceName + " " + getDeviceStatus(wifiP2pDevice.status) ,Toast.LENGTH_SHORT).show();
+		this.connectedPeers.add(wifiP2pDevice);
+	}
+
+	public void p2pGroupInfo(WifiP2pGroup p2pGroupInfo) {
+		Collection<WifiP2pDevice> clientList = p2pGroupInfo.getClientList();
+		HashMap<String, WifiP2pDevice> ownerClients = new HashMap<String, WifiP2pDevice>();
+		for (Iterator iterator = clientList.iterator(); iterator.hasNext();) {
+			WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
+			ownerClients.put(wifiP2pDevice.deviceName, wifiP2pDevice);
+		}
+		
+		WifiP2pDevice owner;
+		if (p2pGroupInfo.isGroupOwner()) {
+			owner = p2pGroupInfo.getOwner();
+			mMap.put(owner.deviceName, ownerClients);
+
+		}
 	}
 
 	
