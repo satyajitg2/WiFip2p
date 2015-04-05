@@ -23,4 +23,9 @@
         android:icon="@drawable/ic_action_discover"
         android:title="SHOW Devices"
         android:showAsAction="ifRoom|withText" />
+    <item
+        android:id="@+id/file_tx"
+        android:icon="@drawable/ic_action_discover"
+        android:title="Chat Session"
+        android:showAsAction="ifRoom|withText" />    
 </menu>

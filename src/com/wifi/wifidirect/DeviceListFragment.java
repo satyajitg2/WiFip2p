@@ -1,5 +1,8 @@
 package com.wifi.wifidirect;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,10 +12,10 @@ import android.content.Context;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -64,11 +67,6 @@ public class DeviceListFragment extends ListFragment {
 			this.items = items;
 		}
 
-		/**
-         * @param context
-         * @param textViewResourceId
-         * @param objects
-         */
         public WiFiPeerListAdapter(Context context, int textViewResourceId,
                 List<WifiP2pDevice> objects) {
             super(context, textViewResourceId, objects);
@@ -115,6 +113,23 @@ public class DeviceListFragment extends ListFragment {
 			listAdapter.notifyDataSetChanged();
 		}
 	}
+    public static boolean copyFile(InputStream inputStream, OutputStream out) {
+        byte buf[] = new byte[1024];
+        int len;
+        try {
+            while ((len = inputStream.read(buf)) != -1) {
+                out.write(buf, 0, len);
+
+            }
+            out.close();
+            inputStream.close();
+        } catch (IOException e) {
+            Log.d(WiFiDirectActivity.TAG, e.toString());
+            return false;
+        }
+        return true;
+    }
+	
     /**
      * An interface-callback for the activity to listen to fragment interaction
      * events.

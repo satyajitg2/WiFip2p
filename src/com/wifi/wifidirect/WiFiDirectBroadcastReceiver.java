@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
+import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
@@ -69,11 +70,13 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             if (manager == null) {
                 return;
             }
+            //EXTRA_WIFI_P2P_INFO = "wifiP2pInfo"
+            WifiP2pInfo wifiP2pInfo = (WifiP2pInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
 
             NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
             //EXTRA_WIFI_P2P_INFO, 
             WifiP2pGroup p2pGroupInfo = (WifiP2pGroup) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
-            
+            //EXTRA_WIFI_P2P_GROUP = "p2pGroupInfo";
             activity.p2pGroupInfo(p2pGroupInfo);
             
             if (networkInfo.isConnected()) {
