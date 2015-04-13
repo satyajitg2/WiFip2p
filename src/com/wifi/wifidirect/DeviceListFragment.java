@@ -4,14 +4,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import com.wifi.background.NetworkConnection;
+import com.wifi.background.ServiceManager;
+import com.wifi.chat.ChatClient;
+import com.wifi.chat.ChatServer;
+import com.wifi.chat.ChatSession;
+
+import android.app.Activity;
 import android.app.ListFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +30,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * A ListFragment that displays available peers on discovery and requests the
@@ -32,7 +44,10 @@ public class DeviceListFragment extends ListFragment {
     View mContentView = null;
     private WifiP2pDevice device;
 	private WiFiPeerListAdapter listAdapter;
- 
+	private ChatServer chatServer;
+	private ServiceManager mServiceManager;
+	private NetworkConnection mNetwork;
+	static int i = 0;
 
 	@Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -47,21 +62,46 @@ public class DeviceListFragment extends ListFragment {
         return mContentView;
     }
 	
+	private Handler handlerDeviceList = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			//String chatLine = msg.getData().getString("msg");
+			if (getListView().isFocused()) {
+				String chatLine = msg.getData().getString("msg");
+                Toast.makeText(getActivity(), "Chat Message : " + chatLine ,Toast.LENGTH_SHORT).show();
+				//addChatLine(chatLine);
+			}
+		}
+	};
+
+	
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		//TODO if Client is CONNECTED SHOW DETAILS else request connection
 		// Check the text view to see if connected OR check device status
-		
 		// If connected start some data transfer
-
+		ChatSession session;
+		ChatClient client;
+		WifiP2pDevice device = (WifiP2pDevice) getListAdapter().getItem(position);
+		System.out.println("TRACE DeviceListFragment onListClick : " + device.deviceAddress);
+		if (mServiceManager!= null) {
+			//Send a click event to device addr
+			String msg = "TRACE Message from clickevent to device " + device.deviceAddress + " " + i++ ;
+			mServiceManager.sendClickEventToDevice(device.deviceAddress, msg, handlerDeviceList);
+		}
 	}
 
+	@Override
+	public void onPause() {
+		super.onPause();
+	}
     /**
      * Array adapter for ListFragment that maintains WifiP2pDevice list.
      */
     public class WiFiPeerListAdapter extends ArrayAdapter<WifiP2pDevice> {
 
         private List<WifiP2pDevice> items = new ArrayList<WifiP2pDevice>();
+		private Context context;
 
         public void setItems(List<WifiP2pDevice> items) {
 			this.items = items;
@@ -71,8 +111,9 @@ public class DeviceListFragment extends ListFragment {
                 List<WifiP2pDevice> objects) {
             super(context, textViewResourceId, objects);
             items = objects;
-
+            this.context = context;
         }
+        
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -96,6 +137,11 @@ public class DeviceListFragment extends ListFragment {
 
             return v;
 
+        }
+        
+        @Override
+        public WifiP2pDevice getItem(int position) {
+        	return items.get(position);
         }
     }
 
@@ -139,5 +185,11 @@ public class DeviceListFragment extends ListFragment {
         void connect(WifiP2pConfig config);
 
         void disconnect();
-    }	
+    }
+
+
+
+	public void setServiceManager(ServiceManager mSerManager) {
+		mServiceManager = mSerManager;
+	}	
 }

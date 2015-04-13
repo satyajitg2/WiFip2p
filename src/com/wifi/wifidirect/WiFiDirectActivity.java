@@ -41,10 +41,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.wifi.background.SampleService;
-import com.wifi.chat.ChatClient;
-import com.wifi.chat.ChatClient.ChatClientCallBack;
-import com.wifi.chat.ChatServer;
+import com.wifi.background.ServiceManager;
 import com.wifi.chat.P2PChatFragment;
+import com.wifi.wifidirect.DeviceListFragment.DeviceListActionListener;
 
 /**
  * An activity that uses WiFi Direct APIs to discover and connect with available
@@ -53,60 +52,41 @@ import com.wifi.chat.P2PChatFragment;
  * The application should also register a BroadcastReceiver for notification of
  * WiFi state related events.
  */
-public class WiFiDirectActivity extends Activity implements ChannelListener, PeerListListener, ConnectionInfoListener {
+public class WiFiDirectActivity extends Activity implements ChannelListener, PeerListListener, ConnectionInfoListener, DeviceListActionListener {
 
-    public static final String TAG = "wifidirect";
+    public static final String TAG = " TRACE wifidirect";
     private WifiP2pManager manager;
     private boolean isWifiP2pEnabled = false;
     private boolean retryChannel = false;
 
     private final IntentFilter intentFilter = new IntentFilter();
+    //private DeviceManager deviceManager;
     private Channel channel;
     private BroadcastReceiver receiver = null;
 
 	//********************* GENERIC ROLE*************************//	
-    //Update Peers available when Peers Change
+    //Update Peers available when 		 Change
 	private List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
 	
 	//Peer MAC -> Device, updated when Peers Change
 	private HashMap<String, WifiP2pDevice> peerMap = new HashMap<String, WifiP2pDevice>();
 
-	//********************* SERVER ROLE*************************//
-	// Map for clients, MAC Addresss --> Peer Device acting as my clients.
-	private HashMap<String, WifiP2pDevice> myClientDeviceMap = new HashMap<String, WifiP2pDevice>();
-
-
-	
-	//********************* CLIENT ROLE*************************//	
-	//Peer MAC --> HostName of server if connected
-	private HashMap<String, String> peerHostNameMap = new HashMap<String, String>();
-	
-	
-	//Peer server MAC addrs --> Server Peer device
-	private HashMap<String, WifiP2pDevice> myServerDeviceMap = new HashMap<String, WifiP2pDevice>();
-	
-	//Map of my clients for each Host Addr, ChatClient
-	private HashMap<String, ChatClient> mHostClients = new HashMap<String, ChatClient>();
-	
-	
-	
-	
-	
 	private WifiP2pInfo info;
-	public WifiP2pDevice myDevice;
+	public static WifiP2pDevice hostWifiDevice;
 	ContentResolver contentResolver;
 	private MediaManager mMedia;
 
 	private Handler handlerGroupOwner = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			String chatLine = msg.getData().getString("msg");
+			//String chatLine = msg.getData().getString("msg");
+			int num = msg.getData().getInt("Bundle1");
+			Toast.makeText(WiFiDirectActivity.this, "Random Number from ServiceManager : " + num ,Toast.LENGTH_SHORT).show();
 			//addChatLine(chatLine);
 		}
 	};
-	private ChatServer chatServer;
-	private ChatClient chatClient;;
-
+	private ServiceManager mSerManager;
+	
     public void setIsWifiP2pEnabled(boolean isWifiP2pEnabled) {
         this.isWifiP2pEnabled = isWifiP2pEnabled;
     }
@@ -114,11 +94,11 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.main);
-        //Start the service
-	  	Intent intent = new Intent(this, SampleService.class);
-	  	startService(intent);        
         setContentView(R.layout.activity_main);
+        
+		Intent intent = new Intent(this, SampleService.class);
+		startService(intent);
+		
         if (savedInstanceState == null) {
 			getFragmentManager().beginTransaction().add(R.id.container, new PlaceholderFragment(), "PlaceHolderFragment").commit();
 		}
@@ -126,15 +106,83 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+        
 
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), null);
         initiateDiscovery();
         
 		contentResolver = getContentResolver();
-        mMedia = new MediaManager(contentResolver);
-        new WifiAsyncTask(getApplicationContext(),contentResolver, mMedia).execute();
+        //mMedia = new MediaManager(contentResolver);
+        //new WifiAsyncTask(getApplicationContext(),contentResolver, mMedia).execute();
+    	mSerManager = new ServiceManager(getApplicationContext());
+    }
+    
+	@Override
+	public void onPeersAvailable(WifiP2pDeviceList peerList) {
+		peers.clear();
+        peers.addAll(peerList.getDeviceList());
+
+		StringBuilder availablePeers = new StringBuilder();
+		for (Iterator iterator = peers.iterator(); iterator.hasNext();) {
+			WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
+			availablePeers.append(hostWifiDevice.deviceName);
+			peerMap.put(wifiP2pDevice.deviceAddress, wifiP2pDevice);
+		}
+		mSerManager.setDevicePeersMap(peerMap);
+        Toast.makeText(WiFiDirectActivity.this, "onPeersAvailable Peers found -  " + availablePeers + peerList.getDeviceList().size() ,Toast.LENGTH_SHORT).show();
+        if (peers.size() == 0) {
+            Log.d(WiFiDirectActivity.TAG, "No devices found");
+            return;
+        }
+        notifyFragmentDataChange();
+	}    
+	
+	@Override
+	public void onConnectionInfoAvailable(WifiP2pInfo info) {
+		System.out.println("TRACE onConnectionInfoAvailable " + info.toString());
+        this.info = info;
+
+        // The owner IP is now known.
+        String hostaddress = info.groupOwnerAddress.getHostAddress();
         
+        // After the group negotiation, we assign the group owner as the file
+        // server. The file server is single threaded, single connection server
+        // socket.
+        if (info.groupFormed && info.isGroupOwner) {
+			//new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text)).execute();
+        	startSocketServer(hostWifiDevice.deviceAddress);
+        } else if (info.groupFormed) {
+        	// Device is a client.
+            // The other device acts as the client. In this case, we enable the
+            // get file button.
+        	startHostClient(hostaddress, 8988, this, hostWifiDevice.deviceAddress);
+        }
+	}
+
+
+	private void startHostClient(String hostaddress, int port,	WiFiDirectActivity wiFiDirectActivity, String mac) {
+		// TODO Manage device as a Client.
+		mSerManager.manageHostClient(hostaddress, port, wiFiDirectActivity, mac);
+	}
+
+	private void startSocketServer(String deviceAddress) {
+		// TODO Manager device as a Server.
+		mSerManager.manageHostServer(deviceAddress);
+	}
+	
+    @Override
+    protected void onStart() {
+    	super.onStart();
+    	System.out.println("TRACE onStart Activity");
+    	mSerManager.onActivityStartBindService();
+
+    }
+    
+    @Override
+    protected void onStop() {
+    	super.onStop();
+    	mSerManager.onActivityStopUnbind();
     }
 
     /** register the BroadcastReceiver with the intent values to be matched */
@@ -143,6 +191,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         super.onResume();
         receiver = new WiFiDirectBroadcastReceiver(manager, channel, this);
         registerReceiver(receiver, intentFilter);
+
     }
 
     @Override
@@ -150,7 +199,11 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         super.onPause();
         unregisterReceiver(receiver);
     }
-
+    
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -182,39 +235,30 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
                 return true;
             case R.id.connect_dev:
             	if (isWifiP2pEnabled && (!peers.isEmpty())) {
-            		List<WifiP2pDevice> list = new ArrayList<WifiP2pDevice>();
-            		for (WifiP2pDevice device : peers) {
-						if (device.status == WifiP2pDevice.CONNECTED) {
-							list.add(device);
-						}
-					}
-            		//TODO show this list on p2p devices
-            		DeviceListFragment frag = (DeviceListFragment) getFragmentManager().findFragmentById(R.id.container);
-            		frag.setPeers(list);
+            		List<WifiP2pDevice> list = peers;
+            		for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+    					WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
+    					// For a connect all, request without checking status. 
+    					// TODO Check individual device is connected, not possible using
+    					// device.isCONNECTED as this returns true even connected to one device.
+			            WifiP2pConfig config = new WifiP2pConfig();
+			            config.deviceAddress = wifiP2pDevice.deviceAddress;
+			            config.wps.setup = WpsInfo.PBC;
+						connect(config);
+            		}
             	}
+            	return true;
             case R.id.show_devices:
             	if (isWifiP2pEnabled && (!peers.isEmpty())) {
-            		List<WifiP2pDevice> list = peers;
-            		List<WifiP2pDevice> client = new ArrayList<WifiP2pDevice>();
-            		for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-						WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
-						if (wifiP2pDevice.status != WifiP2pDevice.CONNECTED){
-				            WifiP2pConfig config = new WifiP2pConfig();
-				            config.deviceAddress = wifiP2pDevice.deviceAddress;
-				            config.wps.setup = WpsInfo.PBC;
-							connect(config);
-						} else {
-							Toast.makeText(WiFiDirectActivity.this, "Connected Device: " + wifiP2pDevice.deviceName , Toast.LENGTH_SHORT).show();
-							client.add(wifiP2pDevice);
-						}
-            		}
-                    DeviceListFragment fragment = new DeviceListFragment();
-            		FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            		transaction.replace(R.id.container, fragment, "DeviceListFragment");
+                    DeviceListFragment fragmentList = new DeviceListFragment();
+                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                    fragmentList.setServiceManager(mSerManager);
+            		transaction.replace(R.id.container, fragmentList, "DeviceListFragment");
             		transaction.addToBackStack(null);
             		transaction.commit();
-            		fragment.setPeers(peers);     
-            	}            	
+            		fragmentList.setPeers(peers);     
+            	}           
+            	return true;
             case R.id.file_tx:
             		//TODO We are already connected, so can establish a chatSession
             		P2PChatFragment fragment = new P2PChatFragment();
@@ -246,14 +290,12 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 
 	public void connect(final WifiP2pConfig config) {
 		// Unique Device Address 
-		String macAddr = config.deviceAddress;
 		
         manager.connect(channel, config, new ActionListener() {
             @Override
             public void onSuccess() {
             	Toast.makeText(WiFiDirectActivity.this, "Connect successfull.", Toast.LENGTH_SHORT).show();
                 // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
-            	String deviceAddress = config.deviceAddress;
             }
             @Override
             public void onFailure(int reason) {
@@ -313,46 +355,20 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		Toast.makeText(WiFiDirectActivity.this, "Reset Data",Toast.LENGTH_SHORT).show();
 	}
 
-	@Override
-	public void onConnectionInfoAvailable(WifiP2pInfo info) {
-        this.info = info;
-
-        // The owner IP is now known.
-        boolean groupOwner = info.isGroupOwner;
-        String hostaddress = info.groupOwnerAddress.getHostAddress();
-        
-        // After the group negotiation, we assign the group owner as the file
-        // server. The file server is single threaded, single connection server
-        // socket.
-        if (info.groupFormed && info.isGroupOwner) {
-			//new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text)).execute();
-        	startSocketServer();
-        } else if (info.groupFormed) {
-        	// Device is a client.
-            // The other device acts as the client. In this case, we enable the
-            // get file button.
-        	if (mHostClients.get(hostaddress) == null) {
-        		chatClient = new ChatClient(hostaddress, 8988, this);
-        		mHostClients.put(hostaddress, chatClient);
-        	}
-        }
-	}
-
-	private void startSocketServer() {
-		// Socket server is already running.
-		if (chatServer == null) {
-			chatServer = new ChatServer(handlerGroupOwner, myDevice);
-		}
-	}
 
 	public void updateThisDevice(WifiP2pDevice device) {
-		this.myDevice = device;
-		System.out.println("public void updateThisDevice(WifiP2pDevice device "+ device.deviceAddress + " "+ device.deviceAddress.length());
+		this.hostWifiDevice = device;
+		System.out.println("TRACE WifiDirectActivity updateThisDevice "+ device.deviceAddress + " "+ device.deviceAddress.length());
 		PlaceholderFragment frag = (PlaceholderFragment) getFragmentManager().findFragmentByTag("PlaceHolderFragment");
-		if (frag != null && (device != null)) {
+		
+		if (frag != null && (frag.isVisible()) && (device != null)) {
 			frag.my_name_view.setText(device.deviceName);
 			frag.my_status_view.setText(getDeviceStatus(device.status));
 		}
+		if (device != null) {
+			mSerManager.sendDeviceData(device);
+		}
+		
 	}
 	
     public static String getDeviceStatus(int deviceStatus) {
@@ -372,35 +388,13 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         }
     }
 
-	@Override
-	public void onPeersAvailable(WifiP2pDeviceList peerList) {
-		peers.clear();
-        peers.addAll(peerList.getDeviceList());
-
-		StringBuilder availablePeers = new StringBuilder();
-		for (Iterator iterator = peers.iterator(); iterator.hasNext();) {
-			WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
-			availablePeers.append(myDevice.deviceName);
-			peerMap.put(wifiP2pDevice.deviceAddress, wifiP2pDevice);
-		}
-        Toast.makeText(WiFiDirectActivity.this, "onPeersAvailable Peers found -  " + availablePeers + peerList.getDeviceList().size() ,Toast.LENGTH_SHORT).show();
-        if (peers.size() == 0) {
-            Log.d(WiFiDirectActivity.TAG, "No devices found");
-            return;
+	private void notifyFragmentDataChange() {
+		DeviceListFragment fragment = (DeviceListFragment) getFragmentManager().findFragmentByTag("DeviceListFragment");
+        if (fragment != null) {
+        	fragment.setPeers(peers);
         }
-		
-		// CAUTION NEVER CALL CONNECT in onPeersAvailable Callback to create LOOPS
-		// TODO Incase a device is connected start data transfer or SYNC
 	}
 
-	private void traversePeersAndConnect(List<WifiP2pDevice> peers2, DeviceListFragment fragment) {
-		for (WifiP2pDevice wifiP2pDevice : peers2) {
-            WifiP2pConfig config = new WifiP2pConfig();
-            config.deviceAddress = wifiP2pDevice.deviceAddress;
-            config.wps.setup = WpsInfo.PBC;
-            //connect(config);
-		}
-	}
 	/**
 	 * A placeholder fragment containing a simple view.
 	 */
@@ -420,45 +414,13 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 			return rootView;
 		}
 	    public void setDeviceStatus() {
-	        my_name_view.setText("Waiting for device name...");
-	        my_status_view.setText("Status retrieving...");
+	    	if (hostWifiDevice == null) {
+		        my_name_view.setText("Waiting for device name...");
+		        my_status_view.setText("Status retrieving...");
+	    	} else {
+				my_name_view.setText(hostWifiDevice.deviceName);
+				my_status_view.setText(getDeviceStatus(hostWifiDevice.status));	
+	    	}
 	    }
 	}
-
-	public void p2pGroupInfo(WifiP2pGroup p2pGroupInfo) {
-		Collection<WifiP2pDevice> clientList = p2pGroupInfo.getClientList();
-		System.out.println("public void p2pGroupInfo(WifiP2pGroup p2pGroupInfo) " + p2pGroupInfo.toString());
-		System.out.println(p2pGroupInfo.getOwner());
-		
-		// If this device is the group Owner. I have a new client connected.
-		
-		if ( (p2pGroupInfo.getOwner() != null) && 
-				!myServerDeviceMap.containsKey(p2pGroupInfo.getOwner().deviceAddress)) {
-			myServerDeviceMap.put(p2pGroupInfo.getOwner().deviceAddress, p2pGroupInfo.getOwner());
-		}
-		
-		if (p2pGroupInfo.isGroupOwner()) {
-			//I am the group Owner, one of these clients is my new client.
-			for (Iterator iterator = clientList.iterator(); iterator.hasNext();) {
-				WifiP2pDevice wifiP2pDevice = (WifiP2pDevice) iterator.next();
-				myClientDeviceMap.put(wifiP2pDevice.deviceAddress, wifiP2pDevice);
-			}
-		} 
-	}
-
-/*	@Override
-	public String deviceName(Pair<String, String> hostDeviceAddrPair) {
-		System.out.println("ChatClient Server hostName " + hostDeviceAddrPair.first);
-		System.out.println("ChatClient Server deviceName " + hostDeviceAddrPair.second);
-		//TODO Update the Mapping with HostName addr with MAC Address of client.
-		if (peerMap.containsKey(hostDeviceAddrPair.second)) {
-			String hostName = peerHostNameMap.get(hostDeviceAddrPair.second);
-			if (hostName == null) {
-				peerHostNameMap.put(hostDeviceAddrPair.second, hostDeviceAddrPair.first);
-			}
-		}
-		return null;
-	}*/
-
-	
 }

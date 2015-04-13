@@ -51,7 +51,6 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             } else {
                 activity.setIsWifiP2pEnabled(false);
                 activity.resetData();
-
             }
             Log.d(WiFiDirectActivity.TAG, "P2P state changed - " + state);
         } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
@@ -71,13 +70,13 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
                 return;
             }
             //EXTRA_WIFI_P2P_INFO = "wifiP2pInfo"
-            WifiP2pInfo wifiP2pInfo = (WifiP2pInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
+//            WifiP2pInfo wifiP2pInfo = (WifiP2pInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
 
             NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
             //EXTRA_WIFI_P2P_INFO, 
-            WifiP2pGroup p2pGroupInfo = (WifiP2pGroup) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+//            WifiP2pGroup p2pGroupInfo = (WifiP2pGroup) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
             //EXTRA_WIFI_P2P_GROUP = "p2pGroupInfo";
-            activity.p2pGroupInfo(p2pGroupInfo);
+            //activity.p2pGroupInfo(p2pGroupInfo);
             
             if (networkInfo.isConnected()) {
                 // we are connected with the other device, request connection
