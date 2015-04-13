@@ -1,9 +1,18 @@
 package com.wifi.background;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Random;
 
+import com.wifi.chat.ChatClient;
+import com.wifi.chat.ChatServer;
+
+import android.app.IntentService;
 import android.app.Service;
 import android.content.Intent;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -14,102 +23,86 @@ import android.os.Process;
 import android.widget.Toast;
 
 public class SampleService extends Service {
-	private Looper mServiceLooper;
-	private ServiceHandler mServiceHandler;
-	private IBinder mBinder = new LocalBinder();
-	private boolean mAllowRebind;
-	private final Random mGenerator = new Random();
-	
-    /** method for clients */
-    public int getRandomNumber() {
-      return mGenerator.nextInt(100);
-    }
-	
-	@Override
-	public void onCreate() {
-	    // Start up the thread running the service.  Note that we create a
-	    // separate thread because the service normally runs in the process's
-	    // main thread, which we don't want to block.  We also make it
-	    // background priority so CPU-intensive work will not disrupt our UI.
-		HandlerThread thread = new HandlerThread("ServiceStartArguments", Process.THREAD_PRIORITY_BACKGROUND);
-		thread.start();
+    // Binder given to clients
+    private final IBinder mBinder = new LocalBinder();
+    // Random number generator
+    private final Random mGenerator = new Random();
+    IntentService intt;
+    private NetworkConnection mNetwork;
+	private HashMap<String, WifiP2pDevice> peerMap = new HashMap<String, WifiP2pDevice>();
 
-	    // Get the HandlerThread's Looper and use it for our Handler
-	    mServiceLooper = thread.getLooper();
-	    mServiceHandler = new ServiceHandler(mServiceLooper);
-	    
-
-	}
-
-	/**
+    /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
     public class LocalBinder extends Binder {
     	SampleService getService() {
             // Return this instance of LocalService so clients can call public methods
+    		System.out.println("TRACE SampleService getService");
             return SampleService.this;
         }
     }
-	
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-	      // For each start request, send a message to start a job and deliver the
-	      // start ID so we know which request we're stopping when we finish the job
-	      Message msg = mServiceHandler.obtainMessage();
-	      msg.arg1 = startId;
-	      mServiceHandler.sendMessage(msg);
-	      
-	      // If we get killed, after returning from here, restart
-	      return START_STICKY;
-	}
-	
-	@Override
-	public void onDestroy() {
-		Toast.makeText(getApplicationContext(), "service done", Toast.LENGTH_SHORT).show();
-	}
-
+    
 	@Override
 	public IBinder onBind(Intent intent) {
-		// A client is binding to the service with bindService()
+		System.out.println("TRACE onBind SampleService");
 		return mBinder;
 	}
 
 	@Override
-    public boolean onUnbind(Intent intent) {
-        // All clients have unbound with unbindService()
-        return mAllowRebind;
-    }
+	public void onCreate() {
+		super.onCreate();
+		mNetwork = new NetworkConnection();
+		System.out.println("TRACE SampleService onCreate");
+	}
 
-	@Override
-    public void onRebind(Intent intent) {
-        // A client is binding to the service with bindService(),
-        // after onUnbind() has already been called
-    }
+
 	
+	@Override
+	public void onDestroy() {
+		mNetwork.resetNetwork();
+		super.onDestroy();
+	}
 
-	// Handler that receives messages from the thread
-	private final class ServiceHandler extends Handler {
-	      public ServiceHandler(Looper looper) {
-	          super(looper);
-	      }
-	      @Override
-	      public void handleMessage(Message msg) {
-	          // Normally we would do some work here, like download a file.
-	          // For our sample, we just sleep for 5 seconds.
-	          long endTime = System.currentTimeMillis() + 5*1000;
-	          while (System.currentTimeMillis() < endTime) {
-	              synchronized (this) {
-	                  try {
-	                      wait(endTime - System.currentTimeMillis());
-	                  } catch (Exception e) {
-	                  }
-	              }
-	          }
-	          // Stop the service using the startId, so that we don't stop
-	          // the service in the middle of handling another job
-	          stopSelf(msg.arg1);
-	      }
-	  }
+    /** method for clients */
+    public int getRandomNumber() {
+      return mGenerator.nextInt(100);
+    }
+
+	public NetworkConnection getmNetwork() {
+		return mNetwork;
+	}
+
+	public void setmNetwork(NetworkConnection mNetwork) {
+		this.mNetwork = mNetwork;
+	}
+
+	public void manageHostClient(String hostaddress, int port, String mac) {
+		System.out.println("TRACE SampleService manageHostClient");
+		// TODO Let the NetworkConnection create a client.
+		mNetwork.manageHostClient(hostaddress, port, mac);
+	}
+
+	public boolean manageHostServer(String deviceAddress) {
+		return mNetwork.manageHostServer(deviceAddress);
+	}
+/*
+	public void sendDevice(WifiP2pDevice device) {
+	}*/
+
+	public void sendDevice(String string) {
+		System.out.println("TRACE SampleServe sendDevice String : "+string);
+	}
+
+	public void sendWifiDevice(WifiP2pDevice device) {
+		System.out.println("TRACE SampleServe sendWifiDevice: " + device.deviceName +" "+ device.deviceAddress + " " +device.describeContents());
+	}
+
+	public void setPeers(HashMap<String, WifiP2pDevice> peerMap) {
+		this.peerMap = peerMap; 
+	}
+
+	public void sendClickEventToDevice(String deviceAddress, String msg, Handler handler) {
+		mNetwork.sendClickEventToDevice(deviceAddress, msg, handler);
+	}
 }
