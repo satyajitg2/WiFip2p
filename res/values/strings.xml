@@ -3,7 +3,7 @@
     <string name="app_name">WiFi Direct</string>
     <string name="enable_p2p_button">P2P On/Off</string>
     <string name="discover_peers_button">Discover</string>
-    <string name="action_device_list">P2P</string>
+    <string name="action_device_list">Connect All</string>
     <string name="connect_peer_button">Connect</string>
     <string name="disconnect_peer_button">Disconnect</string>
     <string name="get_file_button">Launch Gallery</string>

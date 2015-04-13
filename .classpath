@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="com/wifi/wifidirect/DeviceListAdapter.java|com/wifi/wifidirect/ConnectedDevicesFragment.java" kind="src" path="src"/>
+	<classpathentry excluding="com/wifi/wifidirect/DeviceListAdapter.java|com/wifi/wifidirect/ConnectedDevicesFragment.java|com/wifi/wifidirect/netsockets/FileTransferService.java|com/wifi/wifidirect/netsockets/ServerSocketThread.java|com/wifi/wifidirect/DeviceManager.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
