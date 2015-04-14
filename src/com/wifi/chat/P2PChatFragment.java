@@ -1,6 +1,7 @@
 package com.wifi.chat;
 
 import android.app.Fragment;
+import android.content.DialogInterface.OnClickListener;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,6 +9,7 @@ import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,6 +25,7 @@ public class P2PChatFragment extends Fragment {
 	private View mContentView;
 	private ServiceManager mService;
 	private WifiP2pDevice device;
+	private Button mSendButtion;
     public static final String TAG = "P2PChatFragment";
 	
     @Override
@@ -34,6 +37,22 @@ public class P2PChatFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mContentView = inflater.inflate(R.layout.fragment_chat, null);
         mStatusView = (TextView) mContentView.findViewById(R.id.chat_status);
+        mSendButtion = (Button) mContentView.findViewById(R.id.chat_send_btn);
+        mSendButtion.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+		        EditText messageView = (EditText) mContentView.findViewById(R.id.chat_Input);
+		        if (messageView != null) {
+		            String messageString = messageView.getText().toString();
+		            if (!messageString.isEmpty()) {
+		                //mConnection.sendMessage(messageString);
+		            	mService.sendClickEventToDevice(device.deviceAddress, messageString, mUpdateHandler);
+
+		            }
+		            messageView.setText("");
+		        }
+			}
+		});
         mUpdateHandler = new Handler() {
         	@Override
         	public void handleMessage(Message msg) {
@@ -50,6 +69,7 @@ public class P2PChatFragment extends Fragment {
     	
     }
     
+    
 	public void clickConnect(View v) {
 		
 /*        NsdServiceInfo service = mNsdHelper.getChosenServiceInfo();
@@ -60,19 +80,6 @@ public class P2PChatFragment extends Fragment {
         } else {
             Log.d(TAG, "No service to connect to!");
         }*/
-    }
-
-    public void clickSend(View v) {
-        EditText messageView = (EditText) mContentView.findViewById(R.id.chat_Input);
-        if (messageView != null) {
-            String messageString = messageView.getText().toString();
-            if (!messageString.isEmpty()) {
-                //mConnection.sendMessage(messageString);
-            	mService.sendClickEventToDevice(device.deviceAddress, messageString, mUpdateHandler);
-
-            }
-            messageView.setText("");
-        }
     }
 
     public void addChatLine(String line) {

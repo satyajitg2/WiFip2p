@@ -160,7 +160,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     @Override
     protected void onStart() {
     	super.onStart();
-    	System.out.println("TRACE onStart Activity");
     	mSerManager.onActivityStartBindService();
 
     }
@@ -188,6 +187,9 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     
     @Override
     protected void onDestroy() {
+    	//TODO Enable better handling and cleaning.
+    	Intent intent = new Intent(this, SampleService.class);
+    	stopService(intent);
     	super.onDestroy();
     }
     @Override
@@ -222,15 +224,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
                 }
                 initiateDiscovery();
                 return true;
-
-/*            case R.id.file_tx:
-            		//TODO We are already connected, so can establish a chatSession
-            		P2PChatFragment fragment = new P2PChatFragment();
-              		FragmentTransaction transaction = getFragmentManager().beginTransaction();
-              		transaction.replace(R.id.container, fragment, "P2PChatFragment");
-              		transaction.addToBackStack(null);
-              		transaction.commit();  
-*/              		
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -275,7 +268,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 
     @Override
 	public void connect(final WifiP2pConfig config) {
-		// Unique Device Address 
 		
         manager.connect(channel, config, new ActionListener() {
             @Override
@@ -341,14 +333,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 	public void updateThisDevice(WifiP2pDevice device) {
 		hostWifiDevice = device;
 		Toast.makeText(WiFiDirectActivity.this, "Host Device Updated",Toast.LENGTH_SHORT).show();
-		/*
-		System.out.println("TRACE WifiDirectActivity updateThisDevice "+ device.deviceAddress + " "+ device.deviceAddress.length());
-		PlaceholderFragment frag = (PlaceholderFragment) getFragmentManager().findFragmentByTag("PlaceHolderFragment");
-		
-		if (frag != null && (frag.isVisible()) && (device != null)) {
-			frag.my_name_view.setText(device.deviceName);
-			frag.my_status_view.setText(ServiceManager.getDeviceStatus(device.status));
-		}*/
 		if (device != null) {
 			mSerManager.sendDeviceData(device);
 		}
@@ -367,6 +351,8 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 
 	@Override
 	public void startP2PChat(WifiP2pDevice device) {
+		Toast.makeText(WiFiDirectActivity.this, "startP2PChat",Toast.LENGTH_SHORT).show();
+		
 		P2PChatFragment fragment = new P2PChatFragment();
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         fragment.setDevice(device);
@@ -374,6 +360,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		transaction.replace(R.id.container, fragment, "P2PChatFragment");
 		transaction.commit();
 	}
+
 
 /*	public static class PlaceholderFragment extends Fragment {
 		private TextView my_name_view;

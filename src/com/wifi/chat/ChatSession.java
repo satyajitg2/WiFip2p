@@ -171,6 +171,9 @@ public class ChatSession {
     }
     
 	public String encryptMessage(String text) {
+		if (myDeviceName == null) {
+			System.out.println("TRACE ChatSession ********************* Device Name is NULL ****************************");
+		}
 		String msg = myDeviceName + text;
 		System.out.println("TRACE ChatSession encryptMessage");
 		return msg;

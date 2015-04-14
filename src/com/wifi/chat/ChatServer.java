@@ -38,13 +38,13 @@ public class ChatServer implements ChatSessionListener {
 	public void tearDown() {
         mThread.interrupt();
         try {
+        	mServerSocket.close();
         	Set<Socket> keySet = socketSesssionMap.keySet();
         	for (Iterator iterator = keySet.iterator(); iterator.hasNext();) {
 				Socket socket = (Socket) iterator.next();
 				ChatSession value = socketSesssionMap.get(socket);
 				value.tearDown();
 			}
-            mServerSocket.close();
         } catch (IOException ioe) {
             Log.e(TAG, "Error when closing server socket.");
         }

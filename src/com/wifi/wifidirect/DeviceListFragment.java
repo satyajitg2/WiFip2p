@@ -85,7 +85,7 @@ public class DeviceListFragment extends ListFragment {
 			mServiceManager.sendClickEventToDevice(device.deviceAddress, msg, handlerDeviceList);
 			
 			//TODO Once the Device is connected, start a P2P Chat Fragment.
-			//((DeviceListActionListener) activity).startP2PChat(device);
+			((DeviceListActionListener) activity).startP2PChat(device);
 		}
 	}
 

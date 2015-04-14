@@ -201,16 +201,23 @@ public class ChatClient {
 	}
 
 	private String decryptMessage(String line) {
-		String macAddr = line.substring(0, MAC_LENGTH - 1);
-		System.out.println("TRACE ChatClient decryptMessage macAddr: '"+macAddr+"'");
+		try {
+			String macAddr = line.substring(0, MAC_LENGTH - 1);
+			//TODO Enable Header Marker for Error handling and Contingency
+			//TODO Enable Reverse checking with peer device addr
+			System.out.println("TRACE ChatClient decryptMessage macAddr: '"+macAddr+"'");
 
-		if ((!isRegistered) && (!macAddr.isEmpty()) ) {
-			socketPeerKey = macAddr;
-			// TODO Update Socket Map for ChatClient
-			System.out.println("TRACE setup ChatClient MAPs");
-			isRegistered = networkConnection.registerPeerClient(hostname, socketPeerKey, mSocket);
+			if ((!isRegistered) && (!macAddr.isEmpty()) ) {
+				socketPeerKey = macAddr;
+				// TODO Update Socket Map for ChatClient
+				System.out.println("TRACE setup ChatClient MAPs");
+				isRegistered = networkConnection.registerPeerClient(hostname, socketPeerKey, mSocket);
+			}
+			return line.substring(MAC_LENGTH - 1);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		return line.substring(MAC_LENGTH - 1);
+		return line;
 		
 	}	
 	

@@ -14,21 +14,18 @@
             android:id="@+id/chat_media_btn"
             android:layout_width="96dp"
             android:layout_height="64dp"
-            android:onClick="clickMedia"
             android:text="Media" />
 
         <Button
             android:id="@+id/chat_connect_btn"
             android:layout_width="96dp"
             android:layout_height="64dp"
-            android:onClick="clickConnect"
             android:text="Connect" />
 
         <Button
             android:id="@+id/chat_disconnectr_btn"
             android:layout_width="wrap_content"
             android:layout_height="61dp"
-            android:onClick="clickDisconnectr"
             android:text="Disconnect" />
     </LinearLayout>
 
@@ -51,7 +48,6 @@
         android:id="@+id/chat_send_btn"
         android:layout_width="96dp"
         android:layout_height="64dp"
-        android:onClick="clickSend"
         android:text="Send" />
 
 </LinearLayout>

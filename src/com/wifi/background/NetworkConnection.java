@@ -58,19 +58,26 @@ public class NetworkConnection implements ChatClientListener{
 	
 	public void resetNetwork() {
 		// TODO Clean up ChatServer Object and ChatClient.
-		chatServer.tearDown();
+		if (chatServer != null) {
+			chatServer.tearDown();
+		}
 		cleanUpClient();
 	}
 
 	public void cleanUpClient() {
-		Set<String> set = clientMacMap.keySet();
-		for (Iterator iterator = set.iterator(); iterator.hasNext();) {
-			String string = (String) iterator.next();
-			ChatClient cli = clientMacMap.get(string);
-			cli.tearDown();
+		if (clientMacMap != null) {
+			Set<String> set = clientMacMap.keySet();
+			for (Iterator iterator = set.iterator(); iterator.hasNext();) {
+				String string = (String) iterator.next();
+				ChatClient cli = clientMacMap.get(string);
+				cli.tearDown();
+			}
+			clientMacMap.clear();
+
 		}
-		clientMacMap.clear();
-		clientMap.clear();
+		if (clientMap != null) {
+			clientMap.clear();
+		}
 	}
 
 	

@@ -110,15 +110,19 @@ public class SampleService extends Service {
 	}
 
 	public void setPeers(HashMap<String, WifiP2pDevice> mapList) {
-/*		Set<String> keyset = mapList.keySet();
+		if (peerMap.size() == 0) {
+			peerMap = mapList;
+			return;
+		}
+
+		Set<String> keyset = mapList.keySet();
 		for (Iterator iterator = keyset.iterator(); iterator.hasNext();) {
 			String string = (String) iterator.next();
 			if (!peerMap.containsKey(string)) {
 				//Add new device
 				peerMap.put(string, mapList.get(string));
 			}
-		}*/
-		peerMap = mapList;
+		}
 	}
 	public HashMap<String, WifiP2pDevice> getPeerMap() {
 		return peerMap;
