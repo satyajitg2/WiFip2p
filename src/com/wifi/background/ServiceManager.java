@@ -1,5 +1,8 @@
 package com.wifi.background;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 
 import android.content.ComponentName;
@@ -11,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.util.Log;
 import android.view.animation.BounceInterpolator;
 
 import com.wifi.background.SampleService.LocalBinder;
@@ -47,6 +51,24 @@ public class ServiceManager {
 		mContext = context;
 
 	}
+
+	public static String getDeviceStatus(int deviceStatus) {
+        switch (deviceStatus) {
+            case WifiP2pDevice.AVAILABLE:
+                return "Available";
+            case WifiP2pDevice.INVITED:
+                return "Invited";
+            case WifiP2pDevice.CONNECTED:
+                return "Connected";
+            case WifiP2pDevice.FAILED:
+                return "Failed";
+            case WifiP2pDevice.UNAVAILABLE:
+                return "Unavailable";
+            default:
+                return "Unknown";
+        }
+    }
+
 
 	public void onActivityStartBindService(){
         // Bind to LocalService
@@ -103,7 +125,12 @@ public class ServiceManager {
 			mService.sendWifiDevice(device);
 		}
 	}
-
+	public WifiP2pDevice getHostDevice() {
+		if (mBound) {
+			return mService.getHostWifiDevice();
+		}
+		return null;
+	}
 	public NetworkConnection getNetworkManager() {
 		if (mBound) {
 			return mService.getmNetwork();
@@ -122,5 +149,29 @@ public class ServiceManager {
 			mService.sendClickEventToDevice(deviceAddress, msg, handler);
 		}
 	}
+	
+	public HashMap<String, WifiP2pDevice> getPeerMap () {
+		if (mBound) {
+			return mService.getPeerMap();
+		}
+		return new HashMap<String, WifiP2pDevice>();
+	}
+
+    public static boolean copyFile(InputStream inputStream, OutputStream out) {
+        byte buf[] = new byte[1024];
+        int len;
+        try {
+            while ((len = inputStream.read(buf)) != -1) {
+                out.write(buf, 0, len);
+
+            }
+            out.close();
+            inputStream.close();
+        } catch (IOException e) {
+            Log.d(WiFiDirectActivity.TAG, e.toString());
+            return false;
+        }
+        return true;
+    }
 	
 }

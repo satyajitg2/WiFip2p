@@ -116,12 +116,16 @@ public class NetworkConnection implements ChatClientListener{
 	public void sendClickEventToDevice(String deviceAddress, String msg, Handler handler) {
 		System.out.println("TRACE NetworkConnection " + clientMacMap.containsKey(deviceAddress));
 		if (!clientMacMap.containsKey(deviceAddress)) {
-			chatServer.handleClickEvent(deviceAddress, msg, handler);
+			if (chatServer !=null) {
+				chatServer.handleClickEvent(deviceAddress, msg, handler);
+			}
 		} else {
 			ChatClient client = clientMacMap.get(deviceAddress);
-			client.registerHandler(handler);
-			System.out.println("TRACE NetworkConnection performComm and then SEND MESSAGE ON CLICK");
-			client.sendMessage(msg);
+			if ( client != null) {
+				client.registerHandler(handler);
+				System.out.println("TRACE NetworkConnection performComm and then SEND MESSAGE ON CLICK");
+				client.sendMessage(msg);
+			}
 		}
 	}
 

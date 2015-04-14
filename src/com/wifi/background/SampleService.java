@@ -3,6 +3,7 @@ package com.wifi.background;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 
 import com.wifi.chat.ChatClient;
 import com.wifi.chat.ChatServer;
@@ -30,6 +31,8 @@ public class SampleService extends Service {
     IntentService intt;
     private NetworkConnection mNetwork;
 	private HashMap<String, WifiP2pDevice> peerMap = new HashMap<String, WifiP2pDevice>();
+
+	public static WifiP2pDevice hostWifiDevice;
 
     /**
      * Class used for the client Binder.  Because we know this service always
@@ -84,6 +87,9 @@ public class SampleService extends Service {
 	}
 
 	public boolean manageHostServer(String deviceAddress) {
+		if ( hostWifiDevice != null ) {
+			return mNetwork.manageHostServer(hostWifiDevice.deviceAddress);
+		}
 		return mNetwork.manageHostServer(deviceAddress);
 	}
 /*
@@ -95,11 +101,27 @@ public class SampleService extends Service {
 	}
 
 	public void sendWifiDevice(WifiP2pDevice device) {
+		this.hostWifiDevice = device;
 		System.out.println("TRACE SampleServe sendWifiDevice: " + device.deviceName +" "+ device.deviceAddress + " " +device.describeContents());
 	}
 
-	public void setPeers(HashMap<String, WifiP2pDevice> peerMap) {
-		this.peerMap = peerMap; 
+	public static WifiP2pDevice getHostWifiDevice() {
+		return hostWifiDevice;
+	}
+
+	public void setPeers(HashMap<String, WifiP2pDevice> mapList) {
+/*		Set<String> keyset = mapList.keySet();
+		for (Iterator iterator = keyset.iterator(); iterator.hasNext();) {
+			String string = (String) iterator.next();
+			if (!peerMap.containsKey(string)) {
+				//Add new device
+				peerMap.put(string, mapList.get(string));
+			}
+		}*/
+		peerMap = mapList;
+	}
+	public HashMap<String, WifiP2pDevice> getPeerMap() {
+		return peerMap;
 	}
 
 	public void sendClickEventToDevice(String deviceAddress, String msg, Handler handler) {

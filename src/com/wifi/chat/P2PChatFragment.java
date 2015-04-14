@@ -1,6 +1,7 @@
 package com.wifi.chat;
 
 import android.app.Fragment;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -9,7 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.wifi.background.ServiceManager;
 import com.wifi.wifidirect.R;
 
 
@@ -18,9 +21,10 @@ public class P2PChatFragment extends Fragment {
     private TextView mStatusView;
     private Handler mUpdateHandler;
 	private View mContentView;
-
-    public static final String TAG = "P2PChat";
-
+	private ServiceManager mService;
+	private WifiP2pDevice device;
+    public static final String TAG = "P2PChatFragment";
+	
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
     	super.onActivityCreated(savedInstanceState);
@@ -33,14 +37,12 @@ public class P2PChatFragment extends Fragment {
         mUpdateHandler = new Handler() {
         	@Override
         	public void handleMessage(Message msg) {
+        		System.out.println("TRACE P2PChatFragment handleMessage");
         		String chatLine = msg.getData().getString("msg");
         		addChatLine(chatLine);
         	}
         };
-        // Create ChatConnection with Server and Client
-        
-        //Create ChatClient if non owner and IP and port is known
-        
+       
         return mContentView;
     }
 
@@ -66,6 +68,8 @@ public class P2PChatFragment extends Fragment {
             String messageString = messageView.getText().toString();
             if (!messageString.isEmpty()) {
                 //mConnection.sendMessage(messageString);
+            	mService.sendClickEventToDevice(device.deviceAddress, messageString, mUpdateHandler);
+
             }
             messageView.setText("");
         }
@@ -96,4 +100,12 @@ public class P2PChatFragment extends Fragment {
         //mConnection.tearDown();
         super.onDestroy();
     }
+
+	public void setServiceManager(ServiceManager mSerManager) {
+		mService = mSerManager;
+	}
+
+	public void setDevice(WifiP2pDevice device) {
+		this.device = device;
+	}
 }

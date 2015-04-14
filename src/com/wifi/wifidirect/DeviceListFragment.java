@@ -1,36 +1,30 @@
 package com.wifi.wifidirect;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-
-import com.wifi.background.NetworkConnection;
-import com.wifi.background.ServiceManager;
-import com.wifi.chat.ChatClient;
-import com.wifi.chat.ChatServer;
-import com.wifi.chat.ChatSession;
 
 import android.app.Activity;
 import android.app.ListFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Color;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.wifi.background.NetworkConnection;
+import com.wifi.background.ServiceManager;
+import com.wifi.chat.ChatServer;
 
 /**
  * A ListFragment that displays available peers on discovery and requests the
@@ -42,11 +36,8 @@ public class DeviceListFragment extends ListFragment {
 
 	ProgressDialog progressDialog = null;
     View mContentView = null;
-    private WifiP2pDevice device;
 	private WiFiPeerListAdapter listAdapter;
-	private ChatServer chatServer;
 	private ServiceManager mServiceManager;
-	private NetworkConnection mNetwork;
 	static int i = 0;
 
 	@Override
@@ -66,7 +57,8 @@ public class DeviceListFragment extends ListFragment {
 		@Override
 		public void handleMessage(Message msg) {
 			//String chatLine = msg.getData().getString("msg");
-			if (getListView().isFocused()) {
+			System.out.println("TRACE DeviceListFrag handleMessage");
+			if (isVisible()) {
 				String chatLine = msg.getData().getString("msg");
                 Toast.makeText(getActivity(), "Chat Message : " + chatLine ,Toast.LENGTH_SHORT).show();
 				//addChatLine(chatLine);
@@ -74,22 +66,29 @@ public class DeviceListFragment extends ListFragment {
 		}
 	};
 
-	
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		//TODO if Client is CONNECTED SHOW DETAILS else request connection
 		// Check the text view to see if connected OR check device status
 		// If connected start some data transfer
-		ChatSession session;
-		ChatClient client;
 		WifiP2pDevice device = (WifiP2pDevice) getListAdapter().getItem(position);
+		DeviceListActionListener activity = (DeviceListActionListener) getActivity();
+		if ((device.status != 0) && (device.status != 1)) {
+			activity.connectDevice(device.deviceAddress);
+		}
+		
 		System.out.println("TRACE DeviceListFragment onListClick : " + device.deviceAddress);
-		if (mServiceManager!= null) {
+		if (mServiceManager!= null && (device.status == 0)) {
 			//Send a click event to device addr
 			String msg = "TRACE Message from clickevent to device " + device.deviceAddress + " " + i++ ;
+			System.out.println("TRACE Sending message to Device : " + device.deviceAddress);
 			mServiceManager.sendClickEventToDevice(device.deviceAddress, msg, handlerDeviceList);
+			
+			//TODO Once the Device is connected, start a P2P Chat Fragment.
+			//((DeviceListActionListener) activity).startP2PChat(device);
 		}
 	}
+
 
 	@Override
 	public void onPause() {
@@ -123,15 +122,20 @@ public class DeviceListFragment extends ListFragment {
                         Context.LAYOUT_INFLATER_SERVICE);
                 v = vi.inflate(R.layout.row_devices, null);
             }
-            WifiP2pDevice device = items.get(position);
-            if (device != null) {
+            WifiP2pDevice itemDev = items.get(position);
+            if (itemDev != null) {
                 TextView top = (TextView) v.findViewById(R.id.device_name);
                 TextView bottom = (TextView) v.findViewById(R.id.device_details);
+                ImageView image = (ImageView) v.findViewById(R.id.icon);
+                if (image != null && (itemDev.status == 0)) {
+                	//Set Green if CONNECTED
+					image.setBackgroundColor(Color.rgb(10, 255, 50) );
+                }
                 if (top != null) {
-                    top.setText(device.deviceName);
+                    top.setText(itemDev.deviceName);
                 }
                 if (bottom != null) {
-                    bottom.setText(WiFiDirectActivity.getDeviceStatus(device.status));
+                    bottom.setText(ServiceManager.getDeviceStatus(itemDev.status));
                 }
             }
 
@@ -159,23 +163,7 @@ public class DeviceListFragment extends ListFragment {
 			listAdapter.notifyDataSetChanged();
 		}
 	}
-    public static boolean copyFile(InputStream inputStream, OutputStream out) {
-        byte buf[] = new byte[1024];
-        int len;
-        try {
-            while ((len = inputStream.read(buf)) != -1) {
-                out.write(buf, 0, len);
 
-            }
-            out.close();
-            inputStream.close();
-        } catch (IOException e) {
-            Log.d(WiFiDirectActivity.TAG, e.toString());
-            return false;
-        }
-        return true;
-    }
-	
     /**
      * An interface-callback for the activity to listen to fragment interaction
      * events.
@@ -183,8 +171,9 @@ public class DeviceListFragment extends ListFragment {
     public interface DeviceListActionListener {
     	
         void connect(WifiP2pConfig config);
-
+        void connectDevice(String deviceAddress);
         void disconnect();
+        void startP2PChat(WifiP2pDevice device);
     }
 
 

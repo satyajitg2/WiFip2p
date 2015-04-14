@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -150,8 +151,13 @@ public class ChatClient {
                 while (!Thread.currentThread().isInterrupted()) {
 
                     String messageStr = null;
-                    messageStr = input.readLine();
-    				String msg = decryptMessage(messageStr);
+                    String msg = null;
+                    try {
+                    	messageStr = input.readLine();
+                    	msg = decryptMessage(messageStr);
+                    } catch (SocketException e) {
+                    	e.printStackTrace();
+                    }
                     if (msg != null) {
                         Log.d(CLIENT_TAG, "Read from the stream: " + msg);
                         updateMessages(msg, false);

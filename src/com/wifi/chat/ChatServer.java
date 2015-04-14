@@ -57,15 +57,15 @@ public class ChatServer implements ChatSessionListener {
             try {
             	try {
                     mServerSocket = new ServerSocket(8988);
+                    while (!Thread.currentThread().isInterrupted()) {
+                        Log.d(TAG, "ServerSocket Created, awaiting connection");
+                        setSocket(mServerSocket.accept(), deviceMACAddr);
+                        Log.d(TAG, "TRACE Connected.");
+                        }
             	} catch (BindException e) {
             		//TODO Handle if address is already in use.
             		e.printStackTrace();
-            	}
-                while (!Thread.currentThread().isInterrupted()) {
-                    Log.d(TAG, "ServerSocket Created, awaiting connection");
-                    setSocket(mServerSocket.accept(), deviceMACAddr);
-                    Log.d(TAG, "TRACE Connected.");
-                    }
+            	}   
             } catch (IOException e) {
                 Log.e(TAG, "Error creating ServerSocket: ", e);
                 e.printStackTrace();
