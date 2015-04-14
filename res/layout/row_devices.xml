@@ -3,32 +3,38 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    android:background="?android:attr/activatedBackgroundIndicator"
+    android:background="@android:color/background_dark"
     android:padding="6dip">
     <ImageView
         android:id="@+id/icon"
         android:layout_width="wrap_content"
         android:layout_height="fill_parent"
         android:layout_marginRight="2dip"
+        android:background="@android:color/holo_red_dark"
         android:src="@drawable/machine" />
+
         <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="0dip"
-        android:layout_weight="1"
-        android:layout_height="fill_parent">
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="0.75"
+            android:background="@android:color/background_dark"
+            android:orientation="vertical" >
+
         <TextView
             android:id="@+id/device_name"
-            android:layout_width="fill_parent"
+            android:layout_width="254dp"
             android:layout_height="0dip"
-            android:layout_weight="1"
+            android:layout_weight="0.99"
             android:gravity="center_vertical" />
+
         <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
-            android:layout_weight="1"
             android:id="@+id/device_details"
-            android:singleLine="true"
-            android:ellipsize="marquee" />  
+            android:layout_width="254dp"
+            android:layout_height="0dip"
+            android:layout_weight="0.99"
+            android:ellipsize="marquee"
+            android:singleLine="true" />
+  
             </LinearLayout> 
 <!-- 
     <LinearLayout
