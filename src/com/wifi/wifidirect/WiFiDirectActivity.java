@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -331,6 +332,10 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     }
 
 	public void updateThisDevice(WifiP2pDevice device) {
+		if (device == null) {
+			Log.d(TAG, " updateThisDevice Device is null");
+			return;
+		}
 		hostWifiDevice = device;
 		Log.d(TAG, " WiFiDirectActivity updateThisDevice " + device.deviceAddress + device.status ); 
 		Toast.makeText(WiFiDirectActivity.this, "Host Device Updated",Toast.LENGTH_SHORT).show();
@@ -345,8 +350,11 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		DeviceListFragment fragment = (DeviceListFragment) getFragmentManager().findFragmentByTag("DeviceListFragment");
         if (fragment != null) {
         	HashMap<String, WifiP2pDevice> map = mSerManager.getPeerMap();
-        	List<WifiP2pDevice> list;
-        	list = new ArrayList<WifiP2pDevice>(map.values());
+        	List<WifiP2pDevice> list = new ArrayList<WifiP2pDevice>();
+        	Set<String> keyset = map.keySet();
+        	for (String key : keyset) {
+        		list.add(map.get(key));
+			}
         	fragment.setPeers(list);
         }
 	}

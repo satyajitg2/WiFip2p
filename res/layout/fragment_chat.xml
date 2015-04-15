@@ -4,50 +4,25 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="76dp"
-        android:orientation="horizontal" >
-
-        <Button
-            android:id="@+id/chat_media_btn"
-            android:layout_width="96dp"
-            android:layout_height="64dp"
-            android:text="Media" />
-
-        <Button
-            android:id="@+id/chat_connect_btn"
-            android:layout_width="96dp"
-            android:layout_height="64dp"
-            android:text="Connect" />
-
-        <Button
-            android:id="@+id/chat_disconnectr_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="61dp"
-            android:text="Disconnect" />
-    </LinearLayout>
-
     <TextView
         android:id="@+id/chat_status"
         android:layout_width="fill_parent"
         android:layout_height="200dp"
-        android:layout_weight="0.73"
+        android:layout_weight="4.43"
         android:focusable="true"
         android:scrollbars="vertical" />
 
     <EditText
         android:id="@+id/chat_Input"
         android:layout_width="fill_parent"
-        android:layout_height="54dp"
+        android:layout_height="wrap_content"
         android:inputType="text"
         android:singleLine="true" />
 
     <Button
         android:id="@+id/chat_send_btn"
         android:layout_width="96dp"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:text="Send" />
 
 </LinearLayout>

@@ -1,7 +1,10 @@
 package com.wifi.wifidirect;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import android.app.Activity;
 import android.app.ListFragment;
@@ -87,6 +90,18 @@ public class DeviceListFragment extends ListFragment {
 		}
 	}
 
+	@Override
+	public void onResume() {
+		super.onResume();
+
+    	HashMap<String, WifiP2pDevice> map = mServiceManager.getPeerMap();
+    	List<WifiP2pDevice> list = new ArrayList<WifiP2pDevice>();
+    	Set<String> keyset = map.keySet();
+    	for (String key : keyset) {
+    		list.add(map.get(key));
+		}
+    	setPeers(list);
+	}
 
 	@Override
 	public void onPause() {
