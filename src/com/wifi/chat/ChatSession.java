@@ -52,8 +52,13 @@ public class ChatSession {
 	}
 	
     public void tearDown() {
-    	mSendThread.interrupt();
-    	mRecThread.interrupt();
+    	if (mSendThread != null) {
+    		mSendThread.interrupt();
+    	}
+    	if (mRecThread != null) {
+    		mRecThread.interrupt();
+    	}
+    	
         try {
             getSocket().close();
         } catch (IOException ioe) {

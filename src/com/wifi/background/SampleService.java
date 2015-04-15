@@ -1,12 +1,15 @@
 package com.wifi.background;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
 import com.wifi.chat.ChatClient;
 import com.wifi.chat.ChatServer;
+import com.wifi.wifidirect.WiFiDirectActivity;
 
 import android.app.IntentService;
 import android.app.Service;
@@ -31,6 +34,7 @@ public class SampleService extends Service {
     IntentService intt;
     private NetworkConnection mNetwork;
 	private HashMap<String, WifiP2pDevice> peerMap = new HashMap<String, WifiP2pDevice>();
+	private List<WifiP2pDevice> onlineDevices = new ArrayList<WifiP2pDevice>();
 
 	public static WifiP2pDevice hostWifiDevice;
 
@@ -106,20 +110,31 @@ public class SampleService extends Service {
 		return hostWifiDevice;
 	}
 
+	//TODO Ideally service should notify users of this peerMap for change in data.
 	public void setPeers(HashMap<String, WifiP2pDevice> mapList) {
-		if (peerMap.size() == 0) {
+		
+		if (peerMap.size() == 0 && (onlineDevices.size() == 0)) {
+			Toast.makeText(getApplicationContext(), "Service Existing Peers " + peerMap.size() + " Newly added " + mapList.size()  ,Toast.LENGTH_SHORT).show();
 			peerMap = mapList;
 			return;
 		}
-
+		for (WifiP2pDevice wifiP2pDevice : onlineDevices) {
+			if (!peerMap.containsKey(wifiP2pDevice.deviceAddress)) {
+				peerMap.put(wifiP2pDevice.deviceAddress, wifiP2pDevice);
+			}
+		}
+		
+		int newlyadded = 0;
 		Set<String> keyset = mapList.keySet();
 		for (Iterator iterator = keyset.iterator(); iterator.hasNext();) {
 			String string = (String) iterator.next();
 			if (!peerMap.containsKey(string)) {
 				//Add new device
 				peerMap.put(string, mapList.get(string));
+				newlyadded++;
 			}
 		}
+		Toast.makeText(getApplicationContext(), "Service Existing Peers " + peerMap.size() + " Newly added " + newlyadded  ,Toast.LENGTH_SHORT).show();
 	}
 	public HashMap<String, WifiP2pDevice> getPeerMap() {
 		return peerMap;
@@ -127,5 +142,9 @@ public class SampleService extends Service {
 
 	public void sendClickEventToDevice(String deviceAddress, String msg, Handler handler) {
 		mNetwork.sendClickEventToDevice(deviceAddress, msg, handler);
+	}
+
+	public void requestConnectionInvite(WifiP2pDevice device) {
+		onlineDevices.add(device);
 	}
 }

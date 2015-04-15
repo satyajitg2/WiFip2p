@@ -58,7 +58,9 @@ public class P2PChatFragment extends Fragment {
         	public void handleMessage(Message msg) {
         		System.out.println("TRACE P2PChatFragment handleMessage");
         		String chatLine = msg.getData().getString("msg");
-        		addChatLine(chatLine);
+        		if (!chatLine.equalsIgnoreCase("")) {
+        			addChatLine(chatLine);
+        		}
         	}
         };
        
@@ -69,7 +71,13 @@ public class P2PChatFragment extends Fragment {
     	
     }
     
-    
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	//TODO Issue Initial message is lost, seems like its like lost in transition or something.
+    	//     the second send always works.
+    	mService.sendClickEventToDevice(device.deviceAddress, "", mUpdateHandler);
+    }
 	public void clickConnect(View v) {
     }
 

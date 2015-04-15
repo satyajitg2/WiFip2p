@@ -37,7 +37,9 @@ public class ChatServer implements ChatSessionListener {
 	public void tearDown() {
         mThread.interrupt();
         try {
-        	mServerSocket.close();
+        	if (mServerSocket != null) {
+        		mServerSocket.close();
+        	}
         	Set<Socket> keySet = socketSesssionMap.keySet();
         	for (Iterator iterator = keySet.iterator(); iterator.hasNext();) {
 				Socket socket = (Socket) iterator.next();

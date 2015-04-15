@@ -173,5 +173,11 @@ public class ServiceManager {
         }
         return true;
     }
+
+	public void requestConnectionInvite(WifiP2pDevice device) {
+		if (mBound) {
+			mService.requestConnectionInvite(device);
+		}
+	}
 	
 }

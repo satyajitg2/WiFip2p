@@ -46,6 +46,20 @@ public class DeviceListFragment extends ListFragment {
 	@Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        HashMap<String, WifiP2pDevice> map = mServiceManager.getPeerMap();
+
+    	if (map.size() == 0) {
+    		Toast.makeText(getActivity(), "DeviceListFragment No Devices found : ",Toast.LENGTH_SHORT).show();
+    	}
+    	
+    	List<WifiP2pDevice> list = new ArrayList<WifiP2pDevice>();
+    	Set<String> keyset = map.keySet();
+    	for (String key : keyset) {
+    		list.add(map.get(key));
+		}
+    	peers.addAll(list);
+        
+        
         listAdapter = new WiFiPeerListAdapter(getActivity(), R.layout.row_devices, peers);
         this.setListAdapter(listAdapter);
     }
@@ -75,7 +89,7 @@ public class DeviceListFragment extends ListFragment {
 		WifiP2pDevice device = (WifiP2pDevice) getListAdapter().getItem(position);
 		DeviceListActionListener activity = (DeviceListActionListener) getActivity();
 		if ((device.status != 0) && (device.status != 1)) {
-			activity.connectDevice(device.deviceAddress);
+			activity.connectDevice(device);
 		}
 		
 		System.out.println("TRACE DeviceListFragment onListClick : " + device.deviceAddress);
@@ -184,7 +198,7 @@ public class DeviceListFragment extends ListFragment {
     public interface DeviceListActionListener {
     	
         void connect(WifiP2pConfig config);
-        void connectDevice(String deviceAddress);
+        void connectDevice(WifiP2pDevice device);
         void disconnect();
         void startP2PChat(WifiP2pDevice device);
     }

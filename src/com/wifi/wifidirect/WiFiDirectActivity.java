@@ -26,6 +26,7 @@ import android.net.wifi.p2p.WifiP2pManager.ActionListener;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
+import android.net.wifi.p2p.WifiP2pManager.GroupInfoListener;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,9 +55,9 @@ import com.wifi.wifidirect.DeviceListFragment.DeviceListActionListener;
  * The application should also register a BroadcastReceiver for notification of
  * WiFi state related events.
  */
-public class WiFiDirectActivity extends Activity implements ChannelListener, PeerListListener, ConnectionInfoListener, DeviceListActionListener {
+public class WiFiDirectActivity extends Activity implements GroupInfoListener, ChannelListener, PeerListListener, ConnectionInfoListener, DeviceListActionListener {
 
-    public static final String TAG = " TRACE Doot";
+    public static final String TAG = "TRACE Doot";
     private WifiP2pManager manager;
     private boolean isWifiP2pEnabled = false;
     private boolean retryChannel = false;
@@ -114,7 +115,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		mSerManager.setDevicePeersMap(peerMap);
         
         if (peers.size() == 0) {
-            Log.d(WiFiDirectActivity.TAG, "No devices found");
+            Log.d(WiFiDirectActivity.TAG, "Main Activity peers availale Callback, no devices found");
     		Toast.makeText(WiFiDirectActivity.this, "Peers not found -  " + availablePeers + peerList.getDeviceList().size() ,Toast.LENGTH_SHORT).show();
             return;
         }
@@ -176,7 +177,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         super.onResume();
         receiver = new WiFiDirectBroadcastReceiver(manager, channel, this);
         registerReceiver(receiver, intentFilter);
-
+        
     }
 
     @Override
@@ -189,7 +190,13 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     protected void onDestroy() {
     	//TODO Enable better handling and cleaning.
     	Intent intent = new Intent(this, SampleService.class);
+    	
+    	//TODO Stop service till launched. Later the service will continue to 
+    	//     run unless WiFi mode is disabled.
     	stopService(intent);
+    	// Issue 1: Closing activity losses connected device data on restart on device. da:3c:69:04:c2:e9 -- Mm android one
+    	//          There is no loss in case of device Spice Android One
+    	//
     	super.onDestroy();
     }
     @Override
@@ -230,24 +237,28 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     }
 
     @Override
-    public void connectDevice(String deviceAddr) {
+    public void connectDevice(WifiP2pDevice device) {
 		// For a connect all, request without checking status. 
 		// TODO Check individual device is connected, not possible using
 		// device.isCONNECTED as this returns true even connected to one device.
         WifiP2pConfig config = new WifiP2pConfig();
-        config.deviceAddress = deviceAddr;
+        config.deviceAddress = device.deviceAddress;
         config.wps.setup = WpsInfo.PBC;
+        mSerManager.requestConnectionInvite(device);
 		connect(config);
     }
     
     public void addDeviceListFragment() {
-        DeviceListFragment fragmentList = new DeviceListFragment();
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        fragmentList.setServiceManager(mSerManager);
-		transaction.add(R.id.container, fragmentList, "DeviceListFragment");
-		transaction.commit();
-		fragmentList.setPeers(peers);     
-    	return;
+    	DeviceListFragment fragment = (DeviceListFragment) getFragmentManager().findFragmentByTag("DeviceListFragment");
+    	if (fragment == null) {
+            DeviceListFragment fragmentList = new DeviceListFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            fragmentList.setServiceManager(mSerManager);
+    		transaction.add(R.id.container, fragmentList, "DeviceListFragment");
+    		transaction.commit();
+    		fragmentList.setPeers(peers);     
+        	return;
+    	}
     }
 
     private void initiateDiscovery() {
@@ -356,7 +367,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
         		list.add(map.get(key));
 			}
         	fragment.setPeers(list);
-        }
+        } 
 	}
 
 	@Override
@@ -370,4 +381,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		transaction.commit();
 	}
 
+
+		
+	}
 }

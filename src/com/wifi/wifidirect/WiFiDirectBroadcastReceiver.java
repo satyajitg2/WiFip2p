@@ -1,14 +1,21 @@
 package com.wifi.wifidirect;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import com.wifi.background.SampleService;
+import com.wifi.background.ServiceManager;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
-import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
+import android.net.wifi.p2p.WifiP2pManager.GroupInfoListener;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.util.Log;
 
@@ -50,9 +57,11 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
                 activity.setIsWifiP2pEnabled(true);
             } else {
                 activity.setIsWifiP2pEnabled(false);
-                //activity.resetData();
             }
+            
             activity.updateThisDevice((WifiP2pDevice) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE));
+            
+            
             Log.d(WiFiDirectActivity.TAG, "P2P state changed - " + state);
         } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
 
@@ -81,9 +90,60 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             }
             Log.d(WiFiDirectActivity.TAG, "P2P Connection changed, network connectivity is " + networkInfo.isConnected());
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
-            activity.updateThisDevice((WifiP2pDevice) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE));
+        	WifiP2pDevice thisDevice = (WifiP2pDevice) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
+        	System.out.println("TRACE WifiBroadcast this device changed action");
+        	deviceChangedAction(thisDevice, context, intent);
+        		// Request Connection Info
+        	getConnectedPeers(context,intent);
+        	
+            activity.updateThisDevice(thisDevice);
+            //
         	//TODO Do something when this device changes action.
             Log.d(WiFiDirectActivity.TAG, "P2P Host Device changed action. ");
-        }
+        } 
     }
+
+	private void deviceChangedAction(WifiP2pDevice thisDevice, Context context, Intent intent) {
+		System.out.println("TRACE WifiBroadcastReceiver deviceChangedAction " + ServiceManager.getDeviceStatus(thisDevice.status));
+		if (thisDevice.status == WifiP2pDevice.CONNECTED) {
+			manager.requestGroupInfo(channel, (GroupInfoListener) activity);
+		}
+	}
+
+	private void getConnectedPeers(Context context, Intent intent) {
+		// TODO Auto-generated method stub
+        NetworkInfo networkInfo = (NetworkInfo) intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+        WifiP2pGroup groupInfo = (WifiP2pGroup) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+        
+        if (networkInfo != null && ( networkInfo.isConnected() )) {
+        	Log.d(WiFiDirectActivity.TAG, "getConnectedPeers Network is connected.");
+        }
+        if (groupInfo != null ) {
+        	System.out.println("TRACE ********************************************" +groupInfo.getNetworkName());
+        	System.out.println("TRACE ********************************************" +groupInfo.getInterface());
+        	System.out.println("TRACE ********************************************" +groupInfo.getOwner());
+        	System.out.println("TRACE ********************************************" +groupInfo.getClientList().size());
+        	
+        	Collection<WifiP2pDevice> col = groupInfo.getClientList();
+        	List<WifiP2pDevice> list = new ArrayList<WifiP2pDevice>();
+        	list.addAll(col);
+        	
+        	for (WifiP2pDevice wifiP2pDevice : list) {
+				System.out.println("TRACE ******************************************** BroadCast Devilist: " + wifiP2pDevice.deviceName + " " + wifiP2pDevice.deviceAddress + " " + wifiP2pDevice.status);
+			}
+        }
+        
+        
+		
+		
+	}
+
+	private void checkConnectedPeers(Intent intent) {
+		//        	checkConnectedPeers(intent);          
+
+        NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+        if (networkInfo.isConnected()) {
+        	intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+        }		
+	}
 }
