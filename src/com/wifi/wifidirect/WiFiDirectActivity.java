@@ -381,6 +381,31 @@ public class WiFiDirectActivity extends Activity implements GroupInfoListener, C
 		transaction.commit();
 	}
 
+	@Override
+	public void onGroupInfoAvailable(WifiP2pGroup groupInfo) {
+		Toast.makeText(WiFiDirectActivity.this, "GroupInfo Available",Toast.LENGTH_SHORT).show();
+		Log.d(TAG, "TRACE WiFiDirectActivity onGroupInfoAvailable"+ groupInfo.describeContents());
+        if (groupInfo != null ) {
+        	System.out.println("TRACE ********************************************" +groupInfo.getNetworkName());
+        	System.out.println("TRACE ********************************************" +groupInfo.getInterface());
+        	System.out.println("TRACE ********************************************" +groupInfo.getOwner());
+        	System.out.println("TRACE ********************************************" +groupInfo.getClientList().size());
+        	
+        	Collection<WifiP2pDevice> col = groupInfo.getClientList();
+        	List<WifiP2pDevice> list = new ArrayList<WifiP2pDevice>();
+        	list.addAll(col);
+        	HashMap<String, WifiP2pDevice> map = new HashMap<String, WifiP2pDevice>();
+        	for (WifiP2pDevice d : list) {
+				map.put(d.deviceAddress, d);
+			}
+        	
+			mSerManager.setDevicePeersMap(map);
+        	// Add device List Fragment
+        	for (WifiP2pDevice wifiP2pDevice : list) {
+				System.out.println("TRACE ******************************************** BroadCast Devicelist: " + wifiP2pDevice.deviceName + " " + wifiP2pDevice.deviceAddress + " " + wifiP2pDevice.status);
+			}
+			//updateDeviceListFragment();
+        }
 
 		
 	}
