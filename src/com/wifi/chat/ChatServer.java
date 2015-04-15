@@ -19,7 +19,6 @@ public class ChatServer implements ChatSessionListener {
     private static final String TAG = "TRACE WiFip2p Chatserver";
 	ServerSocket mServerSocket = null;
     Thread mThread = null;
-    //WifiP2pDevice myDevice;
 	private ChatSession session;
 	private String deviceMACAddr;
     

@@ -7,6 +7,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
 
@@ -53,7 +54,7 @@ public class WifiAsyncTask extends AsyncTask<ContentResolver, Void, ArrayList<Pa
 		    int titleColumn = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.TITLE);
 		    int data = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.DATA);
 		    String filePathUri = Uri.parse(cursor.getString(data)).getPath();
-		    System.out.println("*******************************************************************"+uri.getPath());
+		    Log.d(WiFiDirectActivity.TAG, "retrieveMediaFiles uri path: "+uri.getPath());
 		    int idColumn = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media._ID);
 		    int coverPath = cursor.getColumnIndex(android.provider.MediaStore.Audio.AlbumColumns.ALBUM_ART);
 		    

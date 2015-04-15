@@ -71,15 +71,6 @@ public class P2PChatFragment extends Fragment {
     
     
 	public void clickConnect(View v) {
-		
-/*        NsdServiceInfo service = mNsdHelper.getChosenServiceInfo();
-        if (service != null) {
-            Log.d(TAG, "Connecting.");
-            mConnection.connectToServer(service.getHost(),
-                    service.getPort());
-        } else {
-            Log.d(TAG, "No service to connect to!");
-        }*/
     }
 
     public void addChatLine(String line) {
@@ -89,22 +80,14 @@ public class P2PChatFragment extends Fragment {
     @Override
     public void onStop() {
     	super.onStop();    	
-    	/*        if (mNsdHelper != null) {
-        mNsdHelper.stopDiscovery();
-    }*/
     }
     @Override
     public void onStart() {
     	super.onStart();
-    	/*        if (mNsdHelper != null) {
-        mNsdHelper.discoverServices();
-    }*/    	
     }
 
     @Override
 	public void onDestroyView() {
-        //mNsdHelper.tearDown();
-        //mConnection.tearDown();
         super.onDestroy();
     }
 

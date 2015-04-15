@@ -92,9 +92,6 @@ public class SampleService extends Service {
 		}
 		return mNetwork.manageHostServer(deviceAddress);
 	}
-/*
-	public void sendDevice(WifiP2pDevice device) {
-	}*/
 
 	public void sendDevice(String string) {
 		System.out.println("TRACE SampleServe sendDevice String : "+string);

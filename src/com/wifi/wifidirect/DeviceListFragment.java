@@ -56,8 +56,6 @@ public class DeviceListFragment extends ListFragment {
 	private Handler handlerDeviceList = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			//String chatLine = msg.getData().getString("msg");
-			System.out.println("TRACE DeviceListFrag handleMessage");
 			if (isVisible()) {
 				String chatLine = msg.getData().getString("msg");
                 Toast.makeText(getActivity(), "Chat Message : " + chatLine ,Toast.LENGTH_SHORT).show();

@@ -55,7 +55,7 @@ import com.wifi.wifidirect.DeviceListFragment.DeviceListActionListener;
  */
 public class WiFiDirectActivity extends Activity implements ChannelListener, PeerListListener, ConnectionInfoListener, DeviceListActionListener {
 
-    public static final String TAG = " TRACE Wifip2p";
+    public static final String TAG = " TRACE Doot";
     private WifiP2pManager manager;
     private boolean isWifiP2pEnabled = false;
     private boolean retryChannel = false;
@@ -69,8 +69,6 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 	public static WifiP2pDevice hostWifiDevice;
 	ContentResolver contentResolver;
 	private ServiceManager mSerManager;
-	
-	// App Names - Vayudoot, Airduct
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -113,9 +111,10 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 			peerMap.put(wifiP2pDevice.deviceAddress, wifiP2pDevice);
 		}
 		mSerManager.setDevicePeersMap(peerMap);
-        Toast.makeText(WiFiDirectActivity.this, "onPeersAvailable Peers found -  " + availablePeers + peerList.getDeviceList().size() ,Toast.LENGTH_SHORT).show();
+        
         if (peers.size() == 0) {
             Log.d(WiFiDirectActivity.TAG, "No devices found");
+    		Toast.makeText(WiFiDirectActivity.this, "Peers not found -  " + availablePeers + peerList.getDeviceList().size() ,Toast.LENGTH_SHORT).show();
             return;
         }
         notifyFragmentDataChange();
@@ -123,7 +122,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 	
 	@Override
 	public void onConnectionInfoAvailable(WifiP2pInfo info) {
-		System.out.println("TRACE onConnectionInfoAvailable " + info.toString());
+		Log.d(WiFiDirectActivity.TAG, "TRACE Callback onConnectionInfoAvailable info data: " + info.groupOwnerAddress + " " + info.groupFormed  );
 
         // The owner IP is now known.
         String hostaddress = info.groupOwnerAddress.getHostAddress();
@@ -300,6 +299,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
     public void onChannelDisconnected() {
         // we will try once more
         if (manager != null && !retryChannel) {
+        	Log.d(TAG, "Channel lost. Trying again ");
             Toast.makeText(this, "Channel lost. Trying again", Toast.LENGTH_LONG).show();
             retryChannel = true;
             manager.initialize(this, getMainLooper(), this);
@@ -332,6 +332,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 
 	public void updateThisDevice(WifiP2pDevice device) {
 		hostWifiDevice = device;
+		Log.d(TAG, " WiFiDirectActivity updateThisDevice " + device.deviceAddress + device.status ); 
 		Toast.makeText(WiFiDirectActivity.this, "Host Device Updated",Toast.LENGTH_SHORT).show();
 		if (device != null) {
 			mSerManager.sendDeviceData(device);
@@ -340,6 +341,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 	}
 	
 	private void notifyFragmentDataChange() {
+		Log.d(TAG, " WiFiDirectActivity notifyFragmentDataChange ");
 		DeviceListFragment fragment = (DeviceListFragment) getFragmentManager().findFragmentByTag("DeviceListFragment");
         if (fragment != null) {
         	HashMap<String, WifiP2pDevice> map = mSerManager.getPeerMap();
@@ -351,8 +353,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 
 	@Override
 	public void startP2PChat(WifiP2pDevice device) {
-		Toast.makeText(WiFiDirectActivity.this, "startP2PChat",Toast.LENGTH_SHORT).show();
-		
+		Log.d(TAG, " WiFiDirectActivity startP2PChat ");
 		P2PChatFragment fragment = new P2PChatFragment();
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         fragment.setDevice(device);
@@ -361,30 +362,4 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Pee
 		transaction.commit();
 	}
 
-
-/*	public static class PlaceholderFragment extends Fragment {
-		private TextView my_name_view;
-		private TextView my_status_view;
-		public PlaceholderFragment() {
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_main, container,false);
-			my_name_view = (TextView) rootView.findViewById(R.id.my_name);
-			my_status_view = (TextView) rootView.findViewById(R.id.my_status);
-			setDeviceStatus();
-			return rootView;
-		}
-	    public void setDeviceStatus() {
-	    	if (hostWifiDevice == null) {
-		        my_name_view.setText("Waiting for device name...");
-		        my_status_view.setText("Status retrieving...");
-	    	} else {
-				my_name_view.setText(hostWifiDevice.deviceName);
-				my_status_view.setText(ServiceManager.getDeviceStatus(hostWifiDevice.status));	
-	    	}
-	    }
-	}
-*/}
+}

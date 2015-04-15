@@ -13,7 +13,7 @@
         android:title="@string/discover_peers_button"
         android:showAsAction="ifRoom|withText" />
 
-    <item
+<!--     <item
         android:id="@+id/connect_dev"
         android:icon="@drawable/ic_action_discover"
         android:title="@string/action_device_list"
@@ -27,5 +27,5 @@
         android:id="@+id/file_tx"
         android:icon="@drawable/ic_action_discover"
         android:title="Chat Session"
-        android:showAsAction="ifRoom|withText" />    
+        android:showAsAction="ifRoom|withText" />     -->
 </menu>
