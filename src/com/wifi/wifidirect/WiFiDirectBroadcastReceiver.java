@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.wifi.background.SampleService;
+import com.wifi.background.DootService;
 import com.wifi.background.ServiceManager;
 
 import android.content.BroadcastReceiver;
@@ -27,6 +27,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
     private WifiP2pManager manager;
     private Channel channel;
     private WiFiDirectActivity activity;
+    private DootService service;
 
     /**
      * @param manager WifiP2pManager system service
@@ -38,6 +39,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
         this.manager = manager;
         this.channel = channel;
         this.activity = activity;
+        this.service = activity.getmSerManager().getmService();
     }
 
     /*
@@ -106,7 +108,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
 	private void deviceChangedAction(WifiP2pDevice thisDevice, Context context, Intent intent) {
 		System.out.println("TRACE WifiBroadcastReceiver deviceChangedAction " + ServiceManager.getDeviceStatus(thisDevice.status));
 		if (thisDevice.status == WifiP2pDevice.CONNECTED) {
-			manager.requestGroupInfo(channel, (GroupInfoListener) activity);
+			manager.requestGroupInfo(channel, (GroupInfoListener) service);
 		}
 	}
 

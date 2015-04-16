@@ -17,7 +17,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.animation.BounceInterpolator;
 
-import com.wifi.background.SampleService.LocalBinder;
+import com.wifi.background.DootService.LocalBinder;
 import com.wifi.wifidirect.WiFiDirectActivity;
 
 /**
@@ -27,7 +27,7 @@ import com.wifi.wifidirect.WiFiDirectActivity;
  * and interact with the service.  
  */
 public class ServiceManager {
-	SampleService mService;
+	DootService mService;
 	boolean mBound;
 	private Context mContext;
 	private Handler handlerMess;
@@ -69,12 +69,16 @@ public class ServiceManager {
         }
     }
 
+	public DootService getmService() {
+		return mService;
+	}
+
 
 	public void onActivityStartBindService(){
         // Bind to LocalService
 		System.out.println("TRACE onActivityStartBindService");
 
-        Intent intent = new Intent(mContext, SampleService.class);
+        Intent intent = new Intent(mContext, DootService.class);
         mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
