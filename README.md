@@ -10,7 +10,7 @@ Set "Developer Options" as below:
   2. Verify apps over USB.
   
 
-Warning: This is an experiemental application, use it on your own risk. You can log any reports, would be greatly helpful.
+Warning: This is an experimental application, use it on your own risk. You can log any reports, would be greatly helpful.
 
 Thanks
   
